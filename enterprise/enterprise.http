@@ -1,0 +1,6 @@
+@enterprise_HostAddress = http://localhost:5238
+
+GET {{enterprise_HostAddress}}/payrolls/
+Accept: application/json
+
+###
