@@ -5,49 +5,49 @@ Import ListNotations.
 
 Definition months_in_year := 12.
 (*
-Создаёт список начислений до ноября.
+Рассчитывает список начислений до ноября.
 count - количесто месяцев в результирующем списке.
 amount - ежемесячная сумма.
 result - список-аккумулятор для накопления результирующего списка.
 *)
-Fixpoint make_payrolls_until_november (count amount: nat) result :=
+Fixpoint payrolls_till_november (count amount: nat) result :=
   match count with
   | 0 => result
-  | S count' => make_payrolls_until_november count' amount ((months_in_year - count, amount) :: result)
+  | S count' => payrolls_till_november count' amount ((months_in_year - count, amount) :: result)
   end.
   
 
-Compute make_payrolls_until_november 3 1000 [].
+Compute payrolls_till_november 3 1000 [].
 (* = [(11, 1000); (10, 1000); (9, 1000)]
    : list (nat * nat) *)
 
 
-Lemma make_payrolls_until_november_S (count amount: nat) (result: list (nat * nat)):
-  make_payrolls_until_november (S count) amount result =
-    make_payrolls_until_november count amount ((months_in_year - (S count), amount) :: result).
-Proof. simpl. reflexivity. Qed.
+Lemma payrolls_till_november_S (count amount: nat) (result: list (nat * nat)):
+  payrolls_till_november (S count) amount result =
+    payrolls_till_november count amount ((months_in_year - (S count), amount) :: result).
+Proof. reflexivity. Qed.
 
 
-Theorem make_payrolls_until_november_len (count amount: nat):
-  forall result: list (nat * nat), length (make_payrolls_until_november count amount result) = count + length result.
+Theorem payrolls_till_november_len (count amount: nat):
+  forall result: list (nat * nat), length (payrolls_till_november count amount result) = count + length result.
 Proof.
   induction count as [| count' IH]. { reflexivity. }
-  intro result. rewrite make_payrolls_until_november_S.
+  intro result. rewrite payrolls_till_november_S.
   rewrite IH. simpl. apply add_succ_r.
 Qed.
 
 
 (*
-Создаёт список начислений до декабря.
+Рассчитывает список начислений до декабря.
 count - количество месяцев в результирующем списке.
 month_amount - ежемесячная сумма, кроме декабрьской.
 december_amount - декабрьская сумма.
 *)
-Definition make_payrolls_until_december (count month_amount december_amount: nat)
-  := (months_in_year, december_amount) :: make_payrolls_until_november (count - 1) month_amount [].
+Definition payrolls_till_december (count month_amount december_amount: nat)
+  := (months_in_year, december_amount) :: payrolls_till_november (count - 1) month_amount [].
   
 
-Compute make_payrolls_until_december 4 1000 1200.
+Compute payrolls_till_december 4 1000 1200.
 (* = [(12, 1200); (11, 1000); (10, 1000); (9, 1000)]
    : list (nat * nat) *)
 
@@ -60,7 +60,7 @@ partial-amount - частисная сумма для разбиения по м
 Definition make_partial_payrolls (count partial_amount: nat) :=  
   let month_amount := partial_amount / count in
   let december_amount := month_amount + partial_amount mod count in
-  make_payrolls_until_december count month_amount december_amount.
+  payrolls_till_december count month_amount december_amount.
   
 
 Compute make_partial_payrolls 3 10000.
@@ -71,7 +71,7 @@ Compute make_partial_payrolls 1 10000.
 
 
 (*
-Создаёт список начислений.
+Рассчитывает список начислений.
 month - месяц, начиная с которого составляется список.
 year_amount - сумма годового начисления.
 *)
@@ -95,21 +95,21 @@ Lemma payrolls_sum_cons (month amount: nat) (payrolls: list (nat * nat)):
 Proof. simpl. reflexivity. Qed.
 
 
-Theorem make_payrolls_until_november_correct (count amount: nat):
-  forall result, payrolls_sum (make_payrolls_until_november count amount result) = count * amount + payrolls_sum result.
+Theorem payrolls_till_november_correct (count amount: nat):
+  forall result, payrolls_sum (payrolls_till_november count amount result) = count * amount + payrolls_sum result.
 Proof.
   induction count as [| count' IH]. { reflexivity. }
-  intro result. rewrite make_payrolls_until_november_S.
+  intro result. rewrite payrolls_till_november_S.
   rewrite IH. rewrite payrolls_sum_cons.
   simpl. ring.
 Qed.
 
 
-Theorem make_payrolls_until_december_correct (count month_amount december_amount: nat):
-  payrolls_sum (make_payrolls_until_december count month_amount december_amount) = december_amount + (count - 1) * month_amount.
+Theorem payrolls_till_december_correct (count month_amount december_amount: nat):
+  payrolls_sum (payrolls_till_december count month_amount december_amount) = december_amount + (count - 1) * month_amount.
 Proof.
-  unfold make_payrolls_until_december. rewrite payrolls_sum_cons.
-  rewrite make_payrolls_until_november_correct.
+  unfold payrolls_till_december. rewrite payrolls_sum_cons.
+  rewrite payrolls_till_november_correct.
   unfold payrolls_sum. simpl.
   rewrite add_0_r. reflexivity.
 Qed.
@@ -133,7 +133,7 @@ Theorem make_partial_payrolls_correct (count partial_amount: nat): count <> 0 ->
   payrolls_sum (make_partial_payrolls count partial_amount) = partial_amount.
 Proof.
   intro H.
-  unfold make_partial_payrolls. rewrite make_payrolls_until_december_correct.
+  unfold make_partial_payrolls. rewrite payrolls_till_december_correct.
   rewrite add_shuffle0.
   rewrite minus_1. 2:{ assumption. }
   symmetry.
